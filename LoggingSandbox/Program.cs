@@ -2,11 +2,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Exceptions;
 using System.Timers;
 
 Console.WriteLine("Hello, World!");
 
-IHost host = Host.CreateDefaultBuilder(args)
+IHost hostBuilder = Host.CreateDefaultBuilder(args)
 	.ConfigureServices((hostContext, services) =>
 	{
 		services.AddSingleton<Blah>();
@@ -16,10 +18,19 @@ IHost host = Host.CreateDefaultBuilder(args)
 			config.SetMinimumLevel(LogLevel.Trace);
 		});
 	})
+	.UseSerilog((context, loggerConfig)=>
+	{
+		loggerConfig
+		.WriteTo.Console()
+		.Enrich.WithExceptionDetails()
+		.WriteTo.Seq("http://localhost:5341");
+	})
 	.Build();
-var logger = host.Services.GetService<ILogger<Blah>>();
-host.Services.GetService<Blah>().Run(logger);
-host.Run();
+
+
+var logger = hostBuilder.Services.GetService<ILogger<Blah>>();
+hostBuilder.Services.GetService<Blah>().Run(logger);
+hostBuilder.Run();
 
 public class Blah
 {
