@@ -1,22 +1,25 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Timers;
 
 Console.WriteLine("Hello, World!");
 
-var services = new ServiceCollection();
-services.AddLogging(config =>
-{
-	config.AddConsole();
-	config.SetMinimumLevel(LogLevel.Trace);
-});
-
-services.AddSingleton<Blah>();
-ServiceProvider serviceProvider = services.BuildServiceProvider();
-
-var logger = serviceProvider.GetService<ILogger<Blah>>();
-serviceProvider.GetService<Blah>().Run(logger);
+IHost host = Host.CreateDefaultBuilder(args)
+	.ConfigureServices((hostContext, services) =>
+	{
+		services.AddSingleton<Blah>();
+		services.AddLogging(config =>
+		{
+			config.AddConsole();
+			config.SetMinimumLevel(LogLevel.Trace);
+		});
+	})
+	.Build();
+var logger = host.Services.GetService<ILogger<Blah>>();
+host.Services.GetService<Blah>().Run(logger);
+host.Run();
 
 public class Blah
 {
